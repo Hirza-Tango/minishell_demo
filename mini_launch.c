@@ -6,7 +6,7 @@
 /*   By: dslogrov <dslogrove@gmail.com>             +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2018/07/13 12:46:46 by dslogrov          #+#    #+#             */
-/*   Updated: 2018/08/03 14:52:31 by dslogrov         ###   ########.fr       */
+/*   Updated: 2018/09/19 14:32:32 by dslogrov         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,54 +15,44 @@
 static char	*exec_location(char *path, char **env)
 {
 	char	**path_env;
-	char	**dup;
 	char	*exec;
+	size_t	i;
 
 	if (!access(path, F_OK))
 		return (ft_strdup(path));
 	path_env = ft_strsplit(ft_getenv("PATH", env), ':');
-	dup = path_env;
-	if (!dup)
+	if (!path_env)
 		return (NULL);
-	while (*dup)
+	i = 0;
+	while (path_env[i])
 	{
-		exec = ft_strmjoin(3, *dup, "/", path);
+		exec = ft_strmjoin(3, path_env[i], "/", path);
 		if (!access(exec, F_OK))
 			break ;
 		free(exec);
 		exec = NULL;
-		dup++;
+		i++;
 	}
 	ft_tabfree(path_env);
 	free(path_env);
 	return (exec);
 }
 
-int			mini_launch(char *argv[], char *env[])
+void		mini_launch(char *argv[], char *env[])
 {
 	char	*exec;
-	int		status;
 
-	status = 0;
 	exec = exec_location(argv[0], env);
 	if (!exec)
-		return (ft_puterr(SHELL_NAME, argv[0], "command not found", 1));
-	else if (access(exec, X_OK))
 	{
-		free(exec);
-		return (ft_puterr(SHELL_NAME, argv[0], "permission denied", 1));
+		ft_putendl("File not found!");
+		return ;
 	}
-	signal(SIGINT, ignore_child_signal);
 	if (fork())
 	{
-		wait4(-1, &status, 0, NULL);
+		wait(NULL);
 		free(exec);
-		signal(SIGINT, signal_handle);
-		return (status);
 	}
 	else
-	{
-		signal(SIGINT, SIG_DFL);
-		return (execve(exec, argv, env));
-	}
+		execve(exec, argv, env);
 }
